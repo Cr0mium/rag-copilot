@@ -16,3 +16,4 @@ data/
 
 # files
 test_*.py
+*.sh
