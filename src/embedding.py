@@ -18,7 +18,7 @@ class EmbeddingModel:
         embeddings = self.model.encode(
             texts,
             batch_size=batch_size,
-            show_progress_bar=True,
+            show_progress_bar=False,
             convert_to_numpy=True,
             normalize_embeddings=True
         )
