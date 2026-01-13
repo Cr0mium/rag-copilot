@@ -17,3 +17,9 @@ data/
 # files
 test_*.py
 *.sh
+*.pkl
+*.index
+
+# macOS
+.DS_Store
+**/.DS_Store
