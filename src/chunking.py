@@ -11,21 +11,22 @@ def chunk_text(text: str,chunk_size: int = 500,overlap: int = 100) -> List[str]:
 
     chunks = []
     current_chunk = []
-    current_tokens = 0
+    current_len = 0
 
     for sent in sentences:
+        #iterate each token for each sent= sent tokens
         new_sent_tokens = [t.text for t in sent if not t.is_space]
         new_sent_len = len(new_sent_tokens)
 
-        # If adding this sentence exceeds chunk size → flush
-        if current_tokens + new_sent_len > chunk_size:
+        # If new len + old len > chunk_size => flush
+        if current_len + new_sent_len > chunk_size:
             chunks.append(" ".join(current_chunk))
 
             # --- Overlap handling (token-based) ---
             overlap_chunk = []
             overlap_tokens = 0
 
-            # Walk backwards through current chunk sentences
+            # Walk backwards, for each sent in chunk
             for prev_sent in reversed(current_chunk):
                 prev_tokens = prev_sent.split()
                 if overlap_tokens + len(prev_tokens) > overlap:
