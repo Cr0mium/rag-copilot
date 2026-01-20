@@ -29,7 +29,7 @@ metadatas = []
 for i,doc in enumerate(tqdm(docs, desc="Processing TXT files")):
     chunks=chunk_text(doc['text']) #array[string]
     for k,chunk in enumerate(chunks):
-        tokenized_docs.append(bm25_tokenize(chunk["text"]))
+        tokenized_docs.append(bm25_tokenize(chunk))
         metadatas.append({
             'text': chunk,
             'source': doc['source'],
@@ -62,7 +62,7 @@ for i,page in enumerate(tqdm(pdf, desc="Processing PDF Pages")):
     # array[string]
     chunks=chunk_text(page['text'])
     for k,chunk in enumerate(chunks):
-        tokenized_docs.append(bm25_tokenize(chunk["text"]))
+        tokenized_docs.append(bm25_tokenize(chunk))
         metadatas.append({
             'text': chunk,
             'source': doc['source'],
@@ -97,11 +97,12 @@ save_vector_store(store,EMBED_DIR)
 
 
 bm25_index = BM25Index(tokenized_docs, metadatas)
+print(f"BM25 Index size: {len(tokenized_docs)} chunks")
 # Free memory
 del tokenized_docs
 gc.collect()
 
-print(f"BM25 Index size: {len(tokenized_docs)} chunks")
+
 with open("embeddings/bm25.pkl", "wb") as f:
     pickle.dump(bm25_index, f)
 
