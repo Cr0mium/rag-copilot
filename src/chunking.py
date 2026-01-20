@@ -35,11 +35,11 @@ def chunk_text(text: str,chunk_size: int = 500,overlap: int = 100) -> List[str]:
                 overlap_tokens += len(prev_tokens)
 
             current_chunk = overlap_chunk
-            current_tokens = overlap_tokens
+            current_len = overlap_tokens
 
-        # Add sentence
+        # Add sentence to list of chunks
         current_chunk.append(sent.text.strip())
-        current_tokens += new_sent_len
+        current_len += new_sent_len
 
     # Add final chunk
     if current_chunk:
@@ -83,4 +83,4 @@ It is only with the input and contributions of the Python community
 that Python has such wonderful documentation -- Thank You!
 
 """
-    chunk_text(text)
+    print(chunk_text(text))

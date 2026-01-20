@@ -1,0 +1,15 @@
+torch>=2.0
+transformers>=4.35
+sentence-transformers
+faiss-cpu
+rank-bm25
+numpy
+scikit-learn
+pandas
+tqdm
+pypdf
+pdfplumber
+spacy
+accelerate
+nltk
+datasets
