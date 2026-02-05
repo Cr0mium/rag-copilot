@@ -7,7 +7,7 @@ class BM25Index:
         self.bm25 = BM25Okapi(tokenized_corpus)
         self.metadatas = metadatas
 
-    def search(self, query_tokens, top_k=5):
+    def search(self, query_tokens, top_k=5)->list[dict]:
         scores = self.bm25.get_scores(query_tokens) #scores for the entire corpus
         ranked = sorted(
             enumerate(scores),
