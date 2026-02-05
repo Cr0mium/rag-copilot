@@ -1,21 +1,58 @@
-from pathlib import Path
+from datasets import load_dataset
+import re
+from langchain_core.documents import Document
 
-def load_documents(data_dir: str):
+data = load_dataset(
+    "koutch/stackoverflow_python",
+    split="train",
+    streaming=True
+)
 
-    documents = []
-    data_path = Path(data_dir)
+def clean_text(text: str) -> str:
+    text = re.sub(r"<.*?>", " ", text)   # remove HTML
+    text = re.sub(r"\s+", " ", text)     # normalize spaces
+    return text.strip()
 
-    for i,file_path in enumerate(data_path.rglob("*.txt")):
-        with open(file_path, "r", encoding="utf-8") as f:
-            text = f.read(10).strip()
 
-        yield ({
-            "text": text,
-            "source": file_path.name,
-        })
+def is_valid(row,x=100,y=100)-> bool:
+    if (row['question_body'] != None and len(row['question_body'])> x)\
+    and (row['answer_body'] != None and len(row['answer_body'])> y) \
+    and (row['answer_score'] >= 2):
+        return True
+    return False
 
+def stream_documents():
+    for row in data:
+        if not is_valid(row):
+            continue
+
+        content = f"""
+        Title: {row['title']}
+
+        Question:
+        {clean_text(row['question_body'])}
+
+        Answer:
+        {clean_text(row['answer_body'])}
+        """.strip()
+
+        yield Document(
+            page_content=content,
+            metadata={
+                "question_id": row["question_id"],
+                "answer_id": row["answer_id"],
+                "tags": row["tags"],
+                "question_score": row["question_score"],
+                "answer_score": row["answer_score"],
+                "source": "stackoverflow"
+            }
+        )
 
 if __name__ == "__main__":
-    docs = load_documents("data/raw")
-    for d in docs:
-        print(d["source"], "->", len(d["text"]), "chars")
+    doc_stream = stream_documents()
+
+    for i,doc in enumerate(doc_stream):
+        print(doc.page_content)
+        print(doc.metadata)
+        if i>5:
+            break
