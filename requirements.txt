@@ -4,12 +4,8 @@ sentence-transformers
 faiss-cpu
 rank-bm25
 numpy
-scikit-learn
-pandas
 tqdm
-pypdf
-pdfplumber
 spacy
-accelerate
-nltk
 datasets
+accelerate
+en-core-web-sm

@@ -19,6 +19,7 @@ test_*.py
 *.sh
 *.pkl
 *.index
+out.txt
 
 # macOS
 .DS_Store
