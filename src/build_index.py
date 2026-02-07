@@ -8,8 +8,7 @@ from bm25_index import BM25Index, bm25_tokenize
 import pickle
 import gc
 
-DATA_DIR='data/raw'
-BATCH_SIZE=32
+BATCH_SIZE=64
 EMBEDDING_DIM=768
 MODEL_NAME="BAAI/bge-base-en-v1.5"
 EMBED_DIR='embeddings'
@@ -30,7 +29,10 @@ metadatas = []
 
 
 
-for i,doc in enumerate(tqdm(doc_stream, desc="Processing Documents")):
+pbar = tqdm(enumerate(doc_stream), desc="Processing Documents")
+
+for i, doc in pbar:
+    pbar.set_postfix(doc=i)
     # array[string]
     chunks=chunk_text(doc.page_content)#n chunks
     chunk_metas = []
@@ -52,23 +54,15 @@ for i,doc in enumerate(tqdm(doc_stream, desc="Processing Documents")):
 
         # store.add- build index
         store.add(embeddings, batch_metadata) #batch=32
-    if i>500000:
-        break
+    if i > 0 and i % 100000 == 0:
+        save_vector_store(store, EMBED_DIR)
+        bm25_index = BM25Index(tokenized_docs, metadatas)
+        with open(f"./embeddings/bm25_{i}.pkl", "wb") as f:
+            pickle.dump(bm25_index, f)
 
-print("Index size:", store.index.ntotal)
-
-save_vector_store(store,EMBED_DIR)
-
-
-bm25_index = BM25Index(tokenized_docs, metadatas)
-print(f"BM25 Index size: {len(tokenized_docs)} chunks")
-# Free memory
-del tokenized_docs
-gc.collect()
-
-
-with open("./embeddings/bm25.pkl", "wb") as f:
-    pickle.dump(bm25_index, f)
-
-
-
+        tokenized_docs.clear()
+        metadatas.clear()
+        del bm25_index
+        gc.collect()
+    # if i>500000:
+        # break
