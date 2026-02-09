@@ -40,6 +40,7 @@ for i, doc in pbar:
         tokenized_docs.append(bm25_tokenize(chunk))
         meta = doc.metadata.copy()
         meta['chunk_id'] = chunk_id
+        meta['text']=chunk
         metadatas.append(meta)
         chunk_metas.append(meta) #for batches
         chunk_id += 1
