@@ -12,7 +12,7 @@ QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 FAISS_DIR = "embeddings"
 BM25_DIR = "embeddings"
 
-TOP_K_FAISS = 30
+TOP_K_FAISS = 50
 TOP_K_BM25_PER_SHARD = 15
 
 ALPHA = 0.6
@@ -20,13 +20,15 @@ BETA = 0.4
 BOOST_BOTH = 1.3
 SCORE_THRESHOLD = 0.15
 
+SUMMARIZATION_MODEL = "facebook/bart-large-cnn"
+MAX_CHARS = 1500  # Max combined characters for context
+TOP_K_SUMMARIES = 5  # How many chunks to summarize
 
 def load_bm25(path):
     with open(path, "rb") as f:
         return pickle.load(f)
 
 
-# ---------- Load models ----------
 embedder = EmbeddingModel(MODEL_NAME)
 
 store = load_vector_store(FAISS_DIR)
@@ -42,7 +44,7 @@ bm25_shard_paths = sorted(
 def hybrid_search(query: str):
     merged = {}
 
-    # ---------- FAISS ----------
+
     q_emb = embedder.encode([QUERY_PREFIX + query])
     if q_emb.ndim == 1:
         q_emb = q_emb.reshape(1, -1)
@@ -52,12 +54,15 @@ def hybrid_search(query: str):
     for rank, r in enumerate(faiss_results):
         key = (r["source"], r["chunk_id"])
         merged[key] = {
-            "text": r["text"],
-            "faiss": 1 / (1 + rank),   # rank-normalized
+            "text": r.get("text", ""),
+            "source": r.get("source"),
+            "question_id": r.get("question_id"),
+            "answer_id": r.get("answer_id"),
+            "tags": r.get("tags"),
+            "faiss": 1 / (1 + rank),
             "bm25": 0.0,
         }
 
-    # ---------- BM25 ----------
     q_tokens = bm25_tokenize(query)
 
     for shard_path in bm25_shard_paths:
@@ -76,15 +81,18 @@ def hybrid_search(query: str):
                 merged[key]["bm25"] = max(merged[key]["bm25"], score)
             else:
                 merged[key] = {
-                    "text": r["text"],
+                    "text": r.get("text", ""),
+                    "source": r.get("source"),
+                    "question_id": r.get("question_id"),
+                    "answer_id": r.get("answer_id"),
+                    "tags": r.get("tags"),
                     "faiss": 0.0,
                     "bm25": score,
                 }
-
         del bm25
         gc.collect()
 
-    # ---------- FUSION ----------
+
     final = []
     for (source, chunk_id), v in merged.items():
         score = ALPHA * v["faiss"] + BETA * v["bm25"]
@@ -100,6 +108,8 @@ def hybrid_search(query: str):
                 "faiss": v["faiss"],
                 "bm25": v["bm25"],
                 "text": v["text"],
+                "question_id": v.get("question_id"),
+                "answer_id": v.get("answer_id"),
             })
 
     final.sort(key=lambda x: x["score"], reverse=True)
@@ -109,13 +119,9 @@ if __name__ =='__main__':
 
     queries=[
     "list index out of range",
-    "typeerror object is not callable",
-    "nameerror name is not defined",
-    "attributeerror has no attribute",
-    "valueerror invalid literal for int",
-    "indentationerror unexpected indent",
-    "syntaxerror invalid syntax",
     ]
 
     for q in queries:
-        hybrid_search(q)
+        final=hybrid_search(q)
+        for ans in final:
+            print(ans)
