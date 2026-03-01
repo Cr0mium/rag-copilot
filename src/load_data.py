@@ -1,58 +1,51 @@
-from datasets import load_dataset
-import re
+from pathlib import Path
+from typing import Iterator, Optional
+
 from langchain_core.documents import Document
 
-data = load_dataset(
-    "koutch/stackoverflow_python",
-    split="train",
-    streaming=True
-)
 
 def clean_text(text: str) -> str:
-    text = re.sub(r"<.*?>", " ", text)   # remove HTML
-    text = re.sub(r"\s+", " ", text)     # normalize spaces
-    return text.strip()
+    """Clean markdown text for ingestion."""
+    if text is None:
+        return ""
+    # Remove excessive whitespace
+    text = text.replace("\r\n", "\n")
+    text = text.replace("\t", " ")
+    text = text.strip()
+    return text
 
 
-def is_valid(row,x=100,y=100)-> bool:
-    if (row['question_body'] != None and len(row['question_body'])> x)\
-    and (row['answer_body'] != None and len(row['answer_body'])> y) \
-    and (row['answer_score'] >= 2):
-        return True
-    return False
+def load_hf_docs(
+    root_dir: str, skip_files: Optional[list] = None
+) -> Iterator[Document]:
 
-def stream_documents():
-    for row in data:
-        if not is_valid(row):
-            continue
+    skip_files = skip_files or ["changes.md"]
+    root = Path(root_dir)
 
-        content = f"""
-        Title: {row['title']}
+    for file_path in root.rglob("*"):
+        if file_path.suffix.lower() in [".md", ".mdx"]:
+            try:
+                text = clean_text(file_path.read_text(encoding="utf-8"))
+            except Exception as e:
+                print(f"[SKIPPED] {file_path} -> {e}")
+                continue
 
-        Question:
-        {clean_text(row['question_body'])}
+            yield Document(
+                page_content=text,
+                metadata={
+                    "filename": file_path.name,
+                    "filepath": str(file_path),
+                    "source": root_dir,
+                },
+            )
 
-        Answer:
-        {clean_text(row['answer_body'])}
-        """.strip()
-
-        yield Document(
-            page_content=content,
-            metadata={
-                "question_id": row["question_id"],
-                "answer_id": row["answer_id"],
-                "tags": row["tags"],
-                "question_score": row["question_score"],
-                "answer_score": row["answer_score"],
-                "source": "stackoverflow"
-            }
-        )
 
 if __name__ == "__main__":
-    doc_stream = stream_documents()
-
-    for i,doc in enumerate(doc_stream):
-        print(doc.page_content)
-        print(doc.metadata)
-        if i>5:
+    RAW_DIR = "data/raw"
+    transformers_docs = load_hf_docs("data/raw")
+    for i, doc in enumerate(transformers_docs):
+        print(doc)
+        # print(doc.page_content[:50])  # first 500 chars
+        # print(doc.metadata)
+        if i > 100:
             break
