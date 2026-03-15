@@ -1,6 +1,6 @@
 import faiss
 import pickle
-from vector_store import VectorStore
+from src.indexing.vector_store import VectorStore
 
 def save_vector_store(store: VectorStore, path: str):
     """

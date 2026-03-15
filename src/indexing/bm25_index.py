@@ -26,5 +26,10 @@ class BM25Index:
 
 def bm25_tokenize(text: str):
     text = text.lower()
-    tokens = re.findall(r"\b\w+\b", text)
-    return tokens    
+
+    tokens = re.findall(
+        r"[a-zA-Z_][a-zA-Z0-9_]*|\d+",
+        text
+    )
+
+    return tokens

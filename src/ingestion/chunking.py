@@ -2,27 +2,20 @@ import re
 
 import spacy
 from transformers import AutoTokenizer
-
+import src.config as config
 nlp = spacy.load("en_core_web_sm")
-hf_tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-base-en-v1.5")
-
-SOFT_LIMIT = 400
-HARD_LIMIT = 500
-OVERLAP = 60
-
+hf_tokenizer = AutoTokenizer.from_pretrained(config.EMBEDDING_MODEL)
 
 def count_tokens(text: str) -> int:
     return len(hf_tokenizer.encode(text, add_special_tokens=False))
 
-
-def safe_truncate(text: str, max_tokens: int = HARD_LIMIT) -> str:
+def safe_truncate(text: str, max_tokens: int = config.HARD_LIMIT) -> str:
     ids = hf_tokenizer.encode(text, add_special_tokens=False)
     if len(ids) <= max_tokens:
         return text
     return hf_tokenizer.decode(ids[:max_tokens])
 
-
-def get_overlap_text(text: str, overlap: int = OVERLAP) -> tuple[str, int]:
+def get_overlap_text(text: str, overlap: int = config.OVERLAP) -> tuple[str, int]:
     """Extract the last `overlap` tokens from text, return (text, token_count)."""
     ids = hf_tokenizer.encode(text, add_special_tokens=False)[-overlap:]
     decoded = hf_tokenizer.decode(ids)
@@ -71,7 +64,7 @@ def split_content_into_chunks(
             last_raw_content = " ".join(current_sents)
 
             # seed next chunk with overlap tail of what we just flushed
-            overlap_text, overlap_tokens = get_overlap_text(last_raw_content)
+            overlap_text, overlap_tokens = get_overlap_text(last_raw_content,config.OVERLAP)
             current_sents = [overlap_text]
             current_tokens = overlap_tokens
 
@@ -86,7 +79,7 @@ def split_content_into_chunks(
     return chunks, last_raw_content
 
 
-def chunk_text(text: str, overlap: int = OVERLAP) -> list[str]:
+def chunk_text(text: str, overlap: int = config.OVERLAP) -> list[str]:
     raw_sections = re.split(r"(?=^#+\s)", text, flags=re.MULTILINE)
     raw_sections = [s.strip() for s in raw_sections if s.strip()]
 
@@ -114,7 +107,7 @@ def chunk_text(text: str, overlap: int = OVERLAP) -> list[str]:
             overlap_seed, _ = get_overlap_text(last_raw_content, overlap)
 
         section_chunks, last_raw_content = split_content_into_chunks(
-            header, content, SOFT_LIMIT, HARD_LIMIT, overlap_seed
+            header, content, config.SOFT_LIMIT, config.HARD_LIMIT, overlap_seed
         )
         chunks.extend(section_chunks)
 
