@@ -50,7 +50,7 @@ for i, doc in pbar:
 
             chunk_id += 1
 
-        embeddings = embedder.encode(batch_chunks, BATCH_SIZE=len(batch_chunks))
+        embeddings = embedder.encode(batch_chunks, batch_size=len(batch_chunks))
 
         store.add(embeddings, batch_metadata)    
         
@@ -65,8 +65,8 @@ for i, doc in pbar:
             del bm25_index
             gc.collect()
             
-        if i > config.MAX_DOCS:
-            break
+    if i > config.MAX_DOCS:
+        break
 save_vector_store(store, config.EMBED_DIR)
 bm25_index = BM25Index(tokenized_docs, metadatas)
 with open(config.EMBED_DIR + "/bm25.pkl", "wb") as f:

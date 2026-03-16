@@ -26,3 +26,7 @@ TOP_K_BM25_PER_SHARD = 100
 RRF_K = 50
 
 RERANKER_MODEL="BAAI/bge-reranker-large"
+
+# evaluate
+EVAL_QUESTIONS_PATH='data/evaluate/eval_questions.json'
+API_QUESTIONS_PATH='data/evaluate/eval_api.json'
