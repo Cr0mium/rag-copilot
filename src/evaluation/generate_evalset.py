@@ -10,7 +10,8 @@ from src.indexing.vector_persist import load_vector_store
 from sentence_transformers import CrossEncoder
 
 import src.config as config
-
+RERANK_K=config.RERANK_K
+RERANK_CANDIDATE_K=config.RERANK_CANDIDATE_K
 # -------------------------
 # Load embedder & stores
 # -------------------------
@@ -121,8 +122,8 @@ def hybrid_search(query):
             merged[key] = r
     final = list(merged.values())
     final.sort(key=lambda x: x["score"], reverse=True)
-    top_candidates = final[:120]
-    reranked = reranker.rerank(query, top_candidates, top_k=50)
+    top_candidates = final[:RERANK_CANDIDATE_K]
+    reranked = reranker.rerank(query, top_candidates, top_k=RERANK_K)
     return reranked
 
 # -------------------------
