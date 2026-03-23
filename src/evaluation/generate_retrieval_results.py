@@ -146,7 +146,8 @@ for q in eval_questions:
     results["hybrid"][question] = hybrid_search(question)
 
 # Save results
-with open("evaluation/retrieval_results.json", "w") as f:
-    json.dump(results, f, indent=2)
+for item in results:
+    with open(f"evaluation/{item}_retrieval_results.json", "w") as f:
+        json.dump(results, f, indent=2)
 
 print("✅ Retrieval results saved to evaluation/retrieval_results.json")
