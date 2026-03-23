@@ -21,8 +21,9 @@ datasets = {
 }
 
 for i, q in enumerate(eval_questions):
-    if i > 10:
-        break
+    print('Processing: ',i)
+#     if i > 10:
+#         break
 
     question = q['question']
     ground_truth = q['ground_truth']
@@ -34,6 +35,8 @@ for i, q in enumerate(eval_questions):
     }
 
     for mode in contexts:
+        if mode != 'hybrid':
+            continue
         ctx = [c["text"] for c in contexts[mode]]
 
         ans = generator.generate(
@@ -52,5 +55,5 @@ for i, q in enumerate(eval_questions):
 
 # save separately
 for mode in datasets:
-    with open(f"{config.RAG_DATASET}_{mode}.json", "w") as f:
+    with open(f"{mode}_dataset.json", "w") as f:
         json.dump(datasets[mode], f, indent=2)

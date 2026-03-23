@@ -40,7 +40,7 @@ import torch
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # huggingface/ollama
-PLATFORM= 'ollama' 
+PLATFORM= 'huggingface' 
 LLM_MODEL="mistralai/Mistral-7B-Instruct-v0.2"
 OLLAMA_MODEL="gemma3:1b"
 OLLAMA_ADDRESS="http://127.0.0.1:11434"

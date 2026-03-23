@@ -10,8 +10,8 @@ from src.indexing.vector_persist import load_vector_store
 from sentence_transformers import CrossEncoder
 
 import src.config as config
-RERANK_K=config.RERANK_K
-RERANK_CANDIDATE_K=config.RERANK_CANDIDATE_K
+RERANK_TOP_K=config.RERANK_TOP_K
+FINAL_K=config.FINAL_K
 # -------------------------
 # Load embedder & stores
 # -------------------------
@@ -122,8 +122,8 @@ def hybrid_search(query):
             merged[key] = r
     final = list(merged.values())
     final.sort(key=lambda x: x["score"], reverse=True)
-    top_candidates = final[:RERANK_CANDIDATE_K]
-    reranked = reranker.rerank(query, top_candidates, top_k=RERANK_K)
+    top_candidates = final[:FINAL_K]
+    reranked = reranker.rerank(query, top_candidates, top_k=RERANK_TOP_K)
     return reranked
 
 # -------------------------
@@ -147,7 +147,7 @@ for q in eval_questions:
 
 # Save results
 for item in results:
-    with open(f"evaluation/{item}_retrieval_results.json", "w") as f:
+    with open(f"evaluation/{item}_retrieval_contexts.json", "w") as f:
         json.dump(results, f, indent=2)
 
-print("✅ Retrieval results saved to evaluation/retrieval_results.json")
+print("✅ Retrieval results saved to evaluation/retrieval_contexts.json")

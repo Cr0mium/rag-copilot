@@ -25,9 +25,18 @@ class AnswerGenerator:
         Question:
         {question}
 
-        Answer concisely:
+        Answer:
         """
 
     def generate(self, question, contexts):
         prompt = self.build_prompt(question, contexts)
-        return self.llm.generate(prompt)
+        raw_output = self.llm.generate(prompt)
+
+        # Extract only answer part
+        if "Answer:" in raw_output:
+            answer = raw_output.split("Answer:")[-1].strip()
+        else:
+            # fallback (just return last part)
+            answer = raw_output.strip()
+            answer = answer.replace("Answer:", "").strip()
+        return answer

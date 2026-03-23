@@ -22,7 +22,8 @@ class HuggingFaceModel:
                     **inputs,
                     max_new_tokens=max_new_tokens,
                     do_sample=True,
-                    temperature=0.7,
+                    temperature=0.3,   # lower = more factual
+                    top_p=0.9,
                     pad_token_id=self.tokenizer.eos_token_id
                 )
         return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
