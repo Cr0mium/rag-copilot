@@ -1,118 +1,135 @@
 import re
-
 import spacy
 from transformers import AutoTokenizer
 import src.config as config
+
+# Load resources once
 nlp = spacy.load("en_core_web_sm")
 hf_tokenizer = AutoTokenizer.from_pretrained(config.EMBEDDING_MODEL)
 
-def count_tokens(text: str) -> int:
-    return len(hf_tokenizer.encode(text, add_special_tokens=False))
+class RAGChunker:
+    def __init__(self, soft_limit=config.SOFT_LIMIT, hard_limit=config.HARD_LIMIT):
+        self.soft_limit = soft_limit
+        self.hard_limit = hard_limit
 
-def safe_truncate(text: str, max_tokens: int = config.HARD_LIMIT) -> str:
-    ids = hf_tokenizer.encode(text, add_special_tokens=False)
-    if len(ids) <= max_tokens:
-        return text
-    return hf_tokenizer.decode(ids[:max_tokens])
+    def count_tokens(self, text: str) -> int:
+        if not text: return 0
+        return len(hf_tokenizer.encode(text, add_special_tokens=False))
 
-def get_overlap_text(text: str, overlap: int = config.OVERLAP) -> tuple[str, int]:
-    """Extract the last `overlap` tokens from text, return (text, token_count)."""
-    ids = hf_tokenizer.encode(text, add_special_tokens=False)[-overlap:]
-    decoded = hf_tokenizer.decode(ids)
-    return decoded, len(ids)
+    def safe_truncate(self, text: str, max_tokens: int) -> str:
+        ids = hf_tokenizer.encode(text, add_special_tokens=False)
+        if len(ids) <= max_tokens:
+            return text
+        return hf_tokenizer.decode(ids[:max_tokens])
+
+    def get_sentence_context(self, sentences: list[str], count: int = 2) -> str:
+        return " ".join(sentences[-count:]) if sentences else ""
+
+    def _flush(self, header: str, sents: list[str]) -> str:
+        raw_body = " ".join(sents).strip()
+        full_text = f"{header}\n{raw_body}" if header else raw_body
+        return self.safe_truncate(full_text, self.hard_limit)
+
+    def process_section(self, header: str, content: str, prev_context: str = "") -> tuple[list[str], str]:
+        
+        header_len = self.count_tokens(header) + 1 if header else 0
+        available_space = self.soft_limit - header_len
+        
+        sentences = [s.text.strip() for s in nlp(content).sents if s.text.strip()]
+        
+        chunks = []
+        current_batch = [prev_context] if prev_context else []
+        current_tokens = self.count_tokens(prev_context)
+
+        last_batch = []  # ✅ FIX 1: clean overlap source
+
+        for sent in sentences:
+            sent_tokens = self.count_tokens(sent)
+
+            # Case 1: Very large sentence
+            if sent_tokens > available_space:
+                if current_batch:
+                    chunk = self._flush(header, current_batch)
+                    if self.count_tokens(chunk) > 30:  # ✅ FIX 2: consistent filtering
+                        chunks.append(chunk)
+                    last_batch = current_batch.copy()
+
+                # Add large sentence as its own chunk
+                large_chunk = self._flush(header, [sent])
+                chunks.append(large_chunk)
+
+                # ✅ FIX 3: token-based tail extraction
+                ids = hf_tokenizer.encode(sent, add_special_tokens=False)
+                tail_ids = ids[-30:]
+                context_str = hf_tokenizer.decode(tail_ids)
+
+                current_batch = [context_str] if context_str else []
+                current_tokens = self.count_tokens(context_str)
+                continue
+
+            # Case 2: Overflow
+            if current_tokens + sent_tokens > available_space and current_batch:
+                chunk = self._flush(header, current_batch)
+
+                if self.count_tokens(chunk) > 30:  # ✅ FIX 2 again
+                    chunks.append(chunk)
+
+                last_batch = current_batch.copy()
+
+                # ✅ FIX 1: use last_batch instead of current_batch
+                overlap = self.get_sentence_context(last_batch, 2)
+
+                # ✅ FIX 4: avoid weak overlap
+                if overlap and self.count_tokens(overlap) > 5:
+                    current_batch = [overlap]
+                    current_tokens = self.count_tokens(overlap)
+                else:
+                    current_batch = []
+                    current_tokens = 0
+
+            # Normal case
+            current_batch.append(sent)
+            current_tokens += sent_tokens
+
+        # Final flush
+        if current_batch:
+            chunk = self._flush(header, current_batch)
+            if self.count_tokens(chunk) > 30:
+                chunks.append(chunk)
+            last_batch = current_batch.copy()
+
+        return chunks, self.get_sentence_context(last_batch, 2)
 
 
-def split_content_into_chunks(
-    header: str,
-    content: str,
-    soft_limit: int,
-    hard_limit: int,
-    overlap_seed: str = "",  # tail of the previous chunk
-) -> tuple[list[str], str]:
-    """
-    Returns (chunks, last_raw_content) where last_raw_content is the
-    raw sentence text of the final chunk (no header), used to seed overlap
-    into the next section.
-    """
-    header_tokens = count_tokens(header) + 1 if header else 0  # +1 for \n
-    available = soft_limit - header_tokens
-
-    doc = nlp(content)
-    sentences = [s.text.strip() for s in doc.sents if s.text.strip()]
-
-    chunks = []
-    # seed current chunk with overlap from previous chunk
-    if overlap_seed:
-        current_sents = [overlap_seed]
-        current_tokens = count_tokens(overlap_seed)
-    else:
-        current_sents = []
-        current_tokens = 0
-
-    last_raw_content = ""
-
-    def flush(sents: list[str]) -> str:
-        raw = " ".join(sents)
-        body = header + "\n" + raw if header else raw
-        return safe_truncate(body, hard_limit)
-
-    for sent in sentences:
-        sent_tokens = count_tokens(sent)
-
-        if current_tokens + sent_tokens > available and current_sents:
-            chunks.append(flush(current_sents))
-            last_raw_content = " ".join(current_sents)
-
-            # seed next chunk with overlap tail of what we just flushed
-            overlap_text, overlap_tokens = get_overlap_text(last_raw_content,config.OVERLAP)
-            current_sents = [overlap_text]
-            current_tokens = overlap_tokens
-
-        current_sents.append(sent)
-        current_tokens += sent_tokens
-
-    # flush remainder
-    if current_sents:
-        chunks.append(flush(current_sents))
-        last_raw_content = " ".join(current_sents)
-
-    return chunks, last_raw_content
-
-
-def chunk_text(text: str, overlap: int = config.OVERLAP) -> list[str]:
-    raw_sections = re.split(r"(?=^#+\s)", text, flags=re.MULTILINE)
+def chunk_text(text: str) -> list[str]:
+    chunker = RAGChunker()
+    
+    raw_sections = re.split(r"(?=^SECTION:)", text, flags=re.MULTILINE)
     raw_sections = [s.strip() for s in raw_sections if s.strip()]
 
-    chunks = []
-    last_raw_content = ""  # carries overlap seed across sections
+    all_chunks = []
+    running_context = ""
 
     for section in raw_sections:
-        lines = section.split("\n", 1)
-        if re.match(r"^#+\s", lines[0]):
-            header = lines[0].strip()
-            content = lines[1].strip() if len(lines) > 1 else ""
+        parts = section.split("\n", 1)
+        
+        if parts[0].startswith("SECTION:"):
+            header = parts[0].strip()
+            content = parts[1].strip() if len(parts) > 1 else ""
         else:
             header = ""
             content = section.strip()
 
-        if not header and not content:
+        if not content:
             continue
 
-        if header and not content:
-            continue
-
-        # compute overlap seed from the tail of the last chunk's raw content
-        overlap_seed = ""
-        if last_raw_content:
-            overlap_seed, _ = get_overlap_text(last_raw_content, overlap)
-
-        section_chunks, last_raw_content = split_content_into_chunks(
-            header, content, config.SOFT_LIMIT, config.HARD_LIMIT, overlap_seed
+        section_chunks, running_context = chunker.process_section(
+            header, content, prev_context=running_context
         )
-        chunks.extend(section_chunks)
 
-    return chunks
+        all_chunks.extend(section_chunks)
 
+    return all_chunks
 
 if __name__ == "__main__":
     text = """

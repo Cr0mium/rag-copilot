@@ -12,7 +12,7 @@ BATCH_SIZE = 64
 EMBEDDING_DIM = 768
 EMBED_DIR = "embeddings"
 RAW_DIR = "data/raw"
-MAX_DOCS = 100
+MAX_DOCS = 1000
 #-------------------------
 #retrieval
 QUERY_PREFIX = "query: "

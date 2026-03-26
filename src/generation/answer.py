@@ -14,29 +14,34 @@ class AnswerGenerator:
             raise ValueError("Invalid PLATFORM")
 
     def build_prompt(self, question, contexts, max_contexts=5):
-        context_text = "\n\n".join(contexts[:max_contexts])
+      context_text = "\n\n".join(
+                      [f"[Context {i+1}]\n{c}" for i, c in enumerate(contexts[:max_contexts])]
+                  )
+      return f"""<s>[INST]
+          You are a strict QA system.
 
-        return f"""
-        You are a helpful assistant. Answer the question using ONLY the provided context.
+          Answer ONLY using the provided context.
 
-        Context:
-        {context_text}
+          Rules:
+        - Use ONLY the provided context
+        - If the answer is not explicitly present, say: "Not found in context"
+        - Do NOT infer or assume missing information
+        - Do NOT add any external knowledge
+          Context:
+          {context_text}
 
-        Question:
-        {question}
+          Question:
+          {question}
 
-        Answer:
-        """
+          Answer in bullet points.
+          [/INST]"""
+    def generate(self, question,contexts, max_new_tokens=200):
+        prompt=self.build_prompt(question,contexts)
+        
+        
 
-    def generate(self, question, contexts):
-        prompt = self.build_prompt(question, contexts)
-        raw_output = self.llm.generate(prompt)
+        full_output = self.llm.generate(prompt)
 
-        # Extract only answer part
-        if "Answer:" in raw_output:
-            answer = raw_output.split("Answer:")[-1].strip()
-        else:
-            # fallback (just return last part)
-            answer = raw_output.strip()
-            answer = answer.replace("Answer:", "").strip()
+        answer = full_output[len(prompt):].strip()
+
         return answer
