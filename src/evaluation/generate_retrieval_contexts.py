@@ -137,9 +137,11 @@ with open(config.EVAL_QUESTIONS_PATH, "r") as f:
 # -------------------------
 results = {"dense": {}, "sparse": {}, "hybrid": {}}
 
-for q in eval_questions:
+for i,q in enumerate(eval_questions):
+    # if i>2:
+    #     break
     question = q["question"]
-    print("Processing:", question)
+    print(f"Processing: {i+1}/{len(eval_questions)+1}", question)
 
     results["dense"][question] = dense_search(question)
     results["sparse"][question] = sparse_search(question)
@@ -147,7 +149,7 @@ for q in eval_questions:
 
 # Save results
 for item in results:
-    with open(f"evaluation/{item}_retrieval_contexts.json", "w") as f:
-        json.dump(results, f, indent=2)
+    with open(f"{config.RETRIEVAL_RESULTS_PATH}/{item}_retrieval_contexts.json", "w") as f:
+        json.dump(results[item], f, indent=2)
 
-print("✅ Retrieval results saved to evaluation/retrieval_contexts.json")
+print("✅ Retrieval results saved to evaluation/[key]_retrieval_contexts.json")

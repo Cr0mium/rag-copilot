@@ -129,7 +129,7 @@ CHUNK: {r['chunk_id']}
         top_candidates = final[:self.config.FINAL_K]
         reranked = self._rerank(query, top_candidates)
 
-        return reranked[:self.config.RETURN_TOP_K]
+        return reranked[:self.config.RETURN_RERANKED_K]
 
 if __name__ == "__main__":
 

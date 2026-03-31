@@ -25,14 +25,14 @@ TOP_K_BM25_PER_SHARD = 100
 
 RRF_K=60
 RERANK_TOP_K = 60 
-RETURN_TOP_K = 5
+RETURN_RERANKED_K = 5
 FINAL_K= 140
 RERANKER_MODEL="BAAI/bge-reranker-large"
 #-------------------------
 # evaluate
-EVAL_QUESTIONS_PATH='data/evaluate/mistral_gt.json'
+EVAL_QUESTIONS_PATH='data/evaluate/evaluation_dataset.json'
 API_QUESTIONS_PATH='data/evaluate/eval_api.json'
-RETRIEVAL_RESULTS_PATH='data/evaluate/retrieval_results.json'
+RETRIEVAL_RESULTS_PATH='data/evaluate/'
 
 #-------------------------
 #generation
