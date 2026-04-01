@@ -24,8 +24,8 @@ TOP_K_FAISS = 100
 TOP_K_BM25_PER_SHARD = 100
 
 RRF_K=60
-RERANK_TOP_K = 60 
-RETURN_RERANKED_K = 5
+RERANK_TOP_K = 60 # evaluate retrieval
+RETURN_RERANKED_K = 5 #retrieval_query
 FINAL_K= 140
 RERANKER_MODEL="BAAI/bge-reranker-large"
 #-------------------------

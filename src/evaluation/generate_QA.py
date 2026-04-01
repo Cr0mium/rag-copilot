@@ -22,7 +22,8 @@ for i, data in enumerate(metadata):
     chunks.append({
         "chunk_id": i,
         "text": data["text"],
-        "source": data.get("source", "unknown")
+        # "source": data.get("source", "unknown"),
+        "filename":data["filename"]
     })
 
 # ----------------------------
@@ -80,14 +81,15 @@ prompts = []
 valid_chunks = []
 
 for chunk in sampled_chunks:
-    context = chunk["text"][:1200]
+    context = chunk["text"]
 
     prompt = PROMPT.format(context=context)
 
     prompts.append(prompt)
     valid_chunks.append({
         "context": context,
-        "source": chunk["source"],
+        # "source": chunk["source"],
+        "filename":chunk["filename"],
         "chunk_id": chunk["chunk_id"]
     })
 
@@ -129,7 +131,8 @@ for i in range(0, len(prompts), BATCH_SIZE):
             "question": q_part,
             "ground_truth": a_part,
             "context": chunk_info["context"],
-            "source": chunk_info["source"],
+            # "source": chunk_info["source"],
+            "filename":chunk_info["filename"],
             "chunk_id": chunk_info["chunk_id"]
         })
 # ----------------------------

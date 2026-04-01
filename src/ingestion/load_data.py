@@ -186,5 +186,5 @@ if __name__ == "__main__":
         print(doc)
         # print(doc.page_content[:50])  # first 500 chars
         # print(doc.metadata)
-        if i > 100:
+        if i > 10:
             break
