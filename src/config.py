@@ -48,4 +48,4 @@ OLLAMA_ADDRESS="http://127.0.0.1:11434"
 #-------------------------
 #rag
 
-RAG_DATASET="data/evaluate/rag_datset.json"
+RAGAS_DATASET_PATH="data/evaluate/hybrid_ragas_dataset.json"

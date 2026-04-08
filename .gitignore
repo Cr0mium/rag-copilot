@@ -20,7 +20,10 @@ test_*.py
 *.pkl
 *.index
 out.txt
+*.ipynb
+ragas_results.csv
 
 # macOS
 .DS_Store
 **/.DS_Store
+

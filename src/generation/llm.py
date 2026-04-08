@@ -21,8 +21,8 @@ class HuggingFaceModel:
         outputs = self.model.generate(
             **inputs,
             max_new_tokens=max_new_tokens,
-            do_sample=False,           
-            temperature=0.3,              
+            do_sample=True,           
+            temperature=0.2,              
             pad_token_id=self.tokenizer.eos_token_id
         )
         return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
@@ -37,7 +37,7 @@ class OllamaModel:
         self.model = config.OLLAMA_MODEL
         self.addr = config.OLLAMA_ADDRESS
     
-    def generate(self, prompt):
+    def generate(self, prompt, max_new_tokens=200):
         
         response = requests.post(
             self.addr + '/api/generate',
@@ -46,7 +46,7 @@ class OllamaModel:
                 "prompt": prompt,
                 "stream": False,
                 "options": {
-                    "num_predict": 200,
+                    "num_predict": max_new_tokens,
                     "temperature": 0.3
                 }
             },

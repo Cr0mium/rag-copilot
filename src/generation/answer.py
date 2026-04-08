@@ -18,30 +18,27 @@ class AnswerGenerator:
                       [f"[Context {i+1}]\n{c}" for i, c in enumerate(contexts[:max_contexts])]
                   )
       return f"""<s>[INST]
-          You are a strict QA system.
+You are a precise QA system. Answer using ONLY the provided context.
 
-          Answer ONLY using the provided context.
+Rules:
+- If the answer is present, give it concisely
+- If not present, say: "Not found in context"
+- No external knowledge, no inference beyond what is stated
 
-          Rules:
-        - Use ONLY the provided context
-        - If the answer is not explicitly present, say: "Not found in context"
-        - Do NOT infer or assume missing information
-        - Do NOT add any external knowledge
-          Context:
-          {context_text}
+Context:
+{context_text}
 
-          Question:
-          {question}
+Question:
+{question}
 
-          Answer in bullet points.
-          [/INST]"""
-    def generate(self, question,contexts, max_new_tokens=200):
-        prompt=self.build_prompt(question,contexts)
-        
-        
-
+Answer:[/INST]"""
+    def generate(self, question,contexts, max_new_tokens=512):
+        prompt=self.build_prompt(question,contexts,max_new_tokens)
         full_output = self.llm.generate(prompt)
+        if "[/INST]" in full_output:
+            answer = full_output.split("[/INST]")[-1].strip()
+        else:
+            answer = full_output[len(prompt):].strip()  # fallback
 
-        answer = full_output[len(prompt):].strip()
 
         return answer
