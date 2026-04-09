@@ -19,11 +19,11 @@ class HybridRetriever:
         self.embedder = EmbeddingModel(config.EMBEDDING_MODEL)
 
         print("[Loading FAISS index]")
-        self.store = load_vector_store(config.FAISS_DIR)
+        self.store = load_vector_store(config.ARTIFACTS_DIR)
         print(f"[✓] FAISS loaded: {self.store.index.ntotal} vectors")
 
         print("[Loading BM25 shards]")
-        self.bm25_shards = self._load_bm25(config.BM25_DIR)
+        self.bm25_shards = self._load_bm25(config.ARTIFACTS_DIR)
         print(f"[✓] Loaded {len(self.bm25_shards)} BM25 shards")
 
         print("[Loading reranker]")

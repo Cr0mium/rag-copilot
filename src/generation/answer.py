@@ -1,17 +1,11 @@
-from src.generation.llm import HuggingFaceModel 
-from src.generation.llm import OllamaModel
+from src.generation.llm import get_llm
 
 import src.config as config
 
 class AnswerGenerator:
 
     def __init__(self, config=config):
-        if config.PLATFORM == "huggingface":
-            self.llm = HuggingFaceModel(config)
-        elif config.PLATFORM == "ollama":
-            self.llm = OllamaModel(config)
-        else:
-            raise ValueError("Invalid PLATFORM")
+        self.llm=get_llm()
 
     def build_prompt(self, question, contexts, max_contexts=5):
       context_text = "\n\n".join(
@@ -37,8 +31,5 @@ Answer:[/INST]"""
         full_output = self.llm.generate(prompt)
         if "[/INST]" in full_output:
             answer = full_output.split("[/INST]")[-1].strip()
-        else:
-            answer = full_output[len(prompt):].strip()  # fallback
-
 
         return answer

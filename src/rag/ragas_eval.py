@@ -1,9 +1,10 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from datasets import Dataset
-import src.config as config
 import json
+from datasets import Dataset
+
+import src.config as config
 
 from ragas import evaluate
 from ragas.metrics import (
@@ -14,24 +15,38 @@ from ragas.metrics import (
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-with open(config.RAGAS_DATASET_PATH) as f:
-    dataset = json.load(f)
 
-dataset = Dataset.from_list(dataset)
+def run_ragas():
+    try:
+        print("[Loading RAGAS dataset]")
+        with open(config.RAGAS_DATASET_PATH) as f:
+            data = json.load(f)
 
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-embeddings = OpenAIEmbeddings()
+        dataset = Dataset.from_list(data)
 
-results = evaluate(
-    dataset,
-    metrics=[
-        faithfulness,
-        answer_correctness,
-        context_precision
-    ],
-    llm=llm,
-    embeddings=embeddings
-)
+        print("[Loading LLM + embeddings]")
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+        embeddings = OpenAIEmbeddings()
 
-df = results.to_pandas()
-df.to_csv("./ragas_results.csv", index=False)
+        print("[Running RAGAS evaluation]")
+        results = evaluate(
+            dataset,
+            metrics=[
+                faithfulness,
+                answer_correctness,
+                context_precision
+            ],
+            llm=llm,
+            embeddings=embeddings
+        )
+
+        df = results.to_pandas()
+
+        output_path = "./ragas_results.csv"
+        df.to_csv(output_path, index=False)
+
+        print(f"✅ RAGAS results saved to {output_path}")
+
+    except Exception as e:
+        print(f"[RAGAS evaluation error]: {e}")
+        raise

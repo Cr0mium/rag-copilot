@@ -10,7 +10,7 @@ import torch
 # ----------------------------
 # Load metadata
 # ----------------------------
-with open(config.EMBED_DIR + '/data.meta.pkl', "rb") as f:
+with open(config.ARTIFACTS_DIR + '/data.meta.pkl', "rb") as f:
     metadata = pickle.load(f)
 
 # ----------------------------

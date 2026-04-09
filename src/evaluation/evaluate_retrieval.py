@@ -18,45 +18,6 @@ def extract_filename(path_or_name):
 # -------------------------
 # Load dataset
 # -------------------------
-with open(config.EVAL_QUESTIONS_PATH) as f:
-    dataset = json.load(f)
-
-# Normalize dataset once
-for item in dataset:
-    item["question"] = normalize(item["question"])
-    item["filename"] = normalize(extract_filename(item["filename"]))
-
-# -------------------------
-# Load retrieval files
-# -------------------------
-retrieval_files = {
-    "dense": os.path.join(config.RETRIEVAL_RESULTS_PATH, "dense_retrieval_contexts.json"),
-    "sparse": os.path.join(config.RETRIEVAL_RESULTS_PATH, "sparse_retrieval_contexts.json"),
-    "hybrid": os.path.join(config.RETRIEVAL_RESULTS_PATH, "hybrid_retrieval_contexts.json"),
-}
-
-retrieval_results = {}
-for key, path in retrieval_files.items():
-    with open(path) as f:
-        data = json.load(f)
-
-        # Normalize keys + filenames
-        normalized_data = {}
-        for q, results in data.items():
-            nq = normalize(q)
-
-            cleaned_results = []
-            for r in results:
-                fname = normalize(extract_filename(r.get("filename", "")))
-
-                cleaned_results.append({
-                    **r,
-                    "filename": fname
-                })
-
-            normalized_data[nq] = cleaned_results
-
-        retrieval_results[key] = normalized_data
 
 # -------------------------
 # Metrics
@@ -93,13 +54,54 @@ def compute_metrics(results_dict, dataset, k=5):
 # -------------------------
 # Evaluate
 # -------------------------
-for retriever_type in ["dense", "sparse", "hybrid"]:
-    print(f"\n=== {retriever_type.upper()} ===")
+def evaluate():
+    with open(config.EVAL_QUESTIONS_PATH) as f:
+        dataset = json.load(f)
 
-    results_dict = retrieval_results[retriever_type]
+    # Normalize dataset once
+    for item in dataset:
+        item["question"] = normalize(item["question"])
+        item["filename"] = normalize(extract_filename(item["filename"]))
 
-    for k in TOP_K_LIST:
-        recall, mrr = compute_metrics(results_dict, dataset, k)
-        print(f"Recall@{k}: {recall:.3f} | MRR: {mrr:.3f}")
+    # -------------------------
+    # Load retrieval files
+    # -------------------------
+    retrieval_files = {
+        "dense": os.path.join(config.RETRIEVAL_RESULTS_PATH, "dense_retrieval_contexts.json"),
+        "sparse": os.path.join(config.RETRIEVAL_RESULTS_PATH, "sparse_retrieval_contexts.json"),
+        "hybrid": os.path.join(config.RETRIEVAL_RESULTS_PATH, "hybrid_retrieval_contexts.json"),
+    }
 
-    print(f"Total queries: {len(dataset)}")
+    retrieval_results = {}
+    for key, path in retrieval_files.items():
+        with open(path) as f:
+            data = json.load(f)
+
+            # Normalize keys + filenames
+            normalized_data = {}
+            for q, results in data.items():
+                nq = normalize(q)
+
+                cleaned_results = []
+                for r in results:
+                    fname = normalize(extract_filename(r.get("filename", "")))
+
+                    cleaned_results.append({
+                        **r,
+                        "filename": fname
+                    })
+
+                normalized_data[nq] = cleaned_results
+
+            retrieval_results[key] = normalized_data
+
+    for retriever_type in ["dense", "sparse", "hybrid"]:
+        print(f"\n=== {retriever_type.upper()} ===")
+
+        results_dict = retrieval_results[retriever_type]
+
+        for k in TOP_K_LIST:
+            recall, mrr = compute_metrics(results_dict, dataset, k)
+            print(f"Recall@{k}: {recall:.3f} | MRR: {mrr:.3f}")
+
+        print(f"Total queries: {len(dataset)}")

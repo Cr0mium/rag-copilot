@@ -1,7 +1,18 @@
 
 import requests
 # import src.config as config
-
+def get_llm():
+    import src.config as config
+    
+    if config.LLM_BACKEND == "hf_api":
+        return HuggingFaceAPI()
+    elif config.LLM_BACKEND == "ollama":
+        return OllamaModel()
+    elif config.LLM_BACKEND == 'hf_model':
+        return HuggingFaceModel()
+    else:
+        raise ValueError("Invalid LLM Backend")
+    
 class HuggingFaceModel:
     def __init__(self, config=None):
         if config is None:
@@ -60,7 +71,43 @@ class OllamaModel:
 
         return data["response"]     
         
+import requests
+
+class HuggingFaceAPI:
+    
+    def __init__(self, config=None):
+        if config is None:
+            import src.config as config
+
+        if config.HF_API_KEY is None:
+            raise ValueError("HF_API_KEY not set in environment")
+        self.api_key = config.HF_API_KEY
+        self.model = config.HF_API_MODEL
+        self.url = f"https://api-inference.huggingface.co/models/{self.model}"
         
+        self.headers = {
+            "Authorization": f"Bearer {self.api_key}"
+        }
+
+    def generate(self, prompt, max_new_tokens=200):
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_new_tokens": max_new_tokens,
+                "temperature": 0.3
+            }
+        }
+
+        response = requests.post(self.url, headers=self.headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+
+        generated = data[0]["generated_text"]
+
+        if generated.startswith(prompt):
+            generated = generated[len(prompt):]
+
+        return generated.strip()      
 
 if __name__ == "__main__":
     # llm=hugginfaceLlm(config)
