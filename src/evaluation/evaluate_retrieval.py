@@ -99,9 +99,11 @@ def evaluate():
         print(f"\n=== {retriever_type.upper()} ===")
 
         results_dict = retrieval_results[retriever_type]
-
+        results={}
         for k in TOP_K_LIST:
             recall, mrr = compute_metrics(results_dict, dataset, k)
-            print(f"Recall@{k}: {recall:.3f} | MRR: {mrr:.3f}")
+            results[f"Recall@{k}:"]=f"{recall:.3f} | MRR: {mrr:.3f}"
+            # print(f"Recall@{k}: {recall:.3f} | MRR: {mrr:.3f}")
 
         print(f"Total queries: {len(dataset)}")
+        return results

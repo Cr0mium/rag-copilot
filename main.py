@@ -50,9 +50,9 @@ def main():
 
     elif args.command == "eval":
         if args.type == "retrieval":
-            run_eval_retrieval()
+            print(run_eval_retrieval())
         elif args.type == "ragas":
-            run_eval_ragas()
+            print(run_eval_ragas())
 
 
 if __name__ == "__main__":

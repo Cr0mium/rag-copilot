@@ -25,8 +25,8 @@ TOP_K_BM25_PER_SHARD = 100
 
 RRF_K=60
 RERANK_TOP_K = 60 # evaluate retrieval
-RETURN_RERANKED_K = 5 #retrieval_query
-FINAL_K= 140
+RETURN_RERANKED_K = 3 #retrieval_query
+FINAL_K= 50
 RERANKER_MODEL="BAAI/bge-reranker-large"
 #-------------------------
 # evaluate
@@ -40,7 +40,7 @@ import torch
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # hf_api/hf_model/ollama
-LLM_BACKEND= 'hf_model' 
+LLM_BACKEND= 'ollama' 
 # config.py
 from dotenv import load_dotenv
 import os

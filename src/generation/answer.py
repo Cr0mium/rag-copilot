@@ -9,7 +9,7 @@ class AnswerGenerator:
 
     def build_prompt(self, question, contexts, max_contexts=5):
       context_text = "\n\n".join(
-                      [f"[Context {i+1}]\n{c}" for i, c in enumerate(contexts[:max_contexts])]
+                      [f"[Context {i+1}]\n{c['filename']}|{ c['text']}" for i, c in enumerate(contexts[:max_contexts])]
                   )
       return f"""<s>[INST]
 You are a precise QA system. Answer using ONLY the provided context.
@@ -28,8 +28,10 @@ Question:
 Answer:[/INST]"""
     def generate(self, question,contexts, max_new_tokens=512):
         prompt=self.build_prompt(question,contexts,max_new_tokens)
-        full_output = self.llm.generate(prompt)
-        if "[/INST]" in full_output:
-            answer = full_output.split("[/INST]")[-1].strip()
+        # print(prompt)
+        answer = self.llm.generate(prompt)
+        # print(answer)
+        if "[/INST]" in answer:
+            answer = answer.split("[/INST]")[-1].strip()
 
         return answer

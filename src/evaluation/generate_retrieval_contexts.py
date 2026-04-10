@@ -20,13 +20,13 @@ class ContextDataset:
         self.embedder = EmbeddingModel(config.EMBEDDING_MODEL)
 
         print("[Loading FAISS index]")
-        self.store = load_vector_store(config.FAISS_DIR)
+        self.store = load_vector_store(config.ARTIFACTS_DIR)
 
         print("[Loading BM25 shards]")
         self.bm25_shards = []
         bm25_paths = sorted(
-            os.path.join(config.BM25_DIR, f)
-            for f in os.listdir(config.BM25_DIR)
+            os.path.join(config.ARTIFACTS_DIR, f)
+            for f in os.listdir(config.ARTIFACTS_DIR)
             if f.startswith("bm25") and f.endswith(".pkl")
         )
         for path in bm25_paths:

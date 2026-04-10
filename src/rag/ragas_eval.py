@@ -46,6 +46,11 @@ def run_ragas():
         df.to_csv(output_path, index=False)
 
         print(f"✅ RAGAS results saved to {output_path}")
+        return {
+            'faithfulness':df['faithfulness'].mean(),
+            'answer_correctness':df['answer_correctness'].mean(),
+            'context_precision':df['context_precision'].mean()
+        }
 
     except Exception as e:
         print(f"[RAGAS evaluation error]: {e}")
