@@ -14,7 +14,7 @@ RERANK_TOP_K = config.RERANK_TOP_K
 FINAL_K = config.FINAL_K
 
 
-class RetrievalDataset:
+class ContextDataset:
     def __init__(self):
         print("[Loading embedder]")
         self.embedder = EmbeddingModel(config.EMBEDDING_MODEL)
