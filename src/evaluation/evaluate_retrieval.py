@@ -104,6 +104,6 @@ def evaluate():
             recall, mrr = compute_metrics(results_dict, dataset, k)
             results[f"Recall@{k}:"]=f"{recall:.3f} | MRR: {mrr:.3f}"
             # print(f"Recall@{k}: {recall:.3f} | MRR: {mrr:.3f}")
-
+        print(results)
         print(f"Total queries: {len(dataset)}")
         return results
