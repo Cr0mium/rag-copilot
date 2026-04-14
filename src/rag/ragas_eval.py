@@ -2,7 +2,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import json
+import pandas as pd
 from datasets import Dataset
+
+from openai import OpenAI
 
 import src.config as config
 
@@ -13,9 +16,44 @@ from ragas.metrics import (
     context_precision
 )
 
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+# ----------------------------
+# OpenAI wrapper for RAGAS
+# ----------------------------
+class OpenAIWrapper:
+    def __init__(self, model="gpt-4o-mini"):
+        self.client = OpenAI()
+        self.model = model
+
+    def generate(self, prompt: str) -> str:
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0
+        )
+        return response.choices[0].message.content
 
 
+# ----------------------------
+# Embeddings wrapper (OpenAI SDK)
+# ----------------------------
+class OpenAIEmbeddingsWrapper:
+    def __init__(self, model="text-embedding-3-small"):
+        self.client = OpenAI()
+        self.model = model
+
+    def embed_text(self, text: str):
+        resp = self.client.embeddings.create(
+            model=self.model,
+            input=text
+        )
+        return resp.data[0].embedding
+
+
+# ----------------------------
+# RAGAS runner
+# ----------------------------
 def run_ragas():
     try:
         print("[Loading RAGAS dataset]")
@@ -24,9 +62,9 @@ def run_ragas():
 
         dataset = Dataset.from_list(data)
 
-        print("[Loading LLM + embeddings]")
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-        embeddings = OpenAIEmbeddings()
+        print("[Loading OpenAI LLM + embeddings]")
+        llm = OpenAIWrapper(model="gpt-4o-mini")
+        embeddings = OpenAIEmbeddingsWrapper()
 
         print("[Running RAGAS evaluation]")
         results = evaluate(
@@ -46,10 +84,11 @@ def run_ragas():
         df.to_csv(output_path, index=False)
 
         print(f"✅ RAGAS results saved to {output_path}")
+
         return {
-            'faithfulness':df['faithfulness'].mean(),
-            'answer_correctness':df['answer_correctness'].mean(),
-            'context_precision':df['context_precision'].mean()
+            "faithfulness": df["faithfulness"].mean(),
+            "answer_correctness": df["answer_correctness"].mean(),
+            "context_precision": df["context_precision"].mean()
         }
 
     except Exception as e:

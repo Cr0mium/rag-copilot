@@ -76,7 +76,6 @@ class RAGASDatasetBuilder:
 
                 if not retrieved:
                     continue
-
                 contexts = self._deduplicate_contexts(retrieved)
 
                 answer = self.generator.generate(
@@ -86,7 +85,7 @@ class RAGASDatasetBuilder:
 
                 data = {
                     "question": question,
-                    "contexts": contexts,
+                    "contexts": [i['text'] for i in contexts],
                     "answer": answer,
                     "ground_truth": ground_truth
                 }

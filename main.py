@@ -28,7 +28,7 @@ def run_eval_retrieval():
     
 def run_eval_ragas():
     pipe=RAGPipeline()
-    pipe.eval_generation()
+    pipe.eval_ragas()
 
 def main():
     parser = argparse.ArgumentParser(description="RAG Pipeline CLI")
