@@ -22,8 +22,11 @@ test_*.py
 out.txt
 *.ipynb
 ragas_results.csv
+checkpoints/
 
 # macOS
 .DS_Store
 **/.DS_Store
+
+output/
 

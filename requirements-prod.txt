@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+requests
+
+faiss-cpu
+rank-bm25
+numpy==1.26.4
+pandas
+tqdm
+
+python-dotenv
+scikit-learn
+
+torch==2.4.1
+transformers>=4.41
+sentence-transformers

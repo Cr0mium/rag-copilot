@@ -40,13 +40,13 @@ import torch
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # hf_api/hf_model/ollama
-LLM_BACKEND= 'ollama' 
+LLM_BACKEND= 'hf_model' 
 # config.py
 from dotenv import load_dotenv
 import os
 load_dotenv()
-HF_API_KEY = os.getenv("HF_API_KEY")
-HF_API_MODEL= "google/gemma-2b-it"
+
+HF_API_MODEL= "google/gemma-3-1b-it"
 
 LLM_MODEL="mistralai/Mistral-7B-Instruct-v0.2"
 
