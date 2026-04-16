@@ -1,134 +1,216 @@
-# RAG Python Helper (Retrieval-Only)
+# 🧠 RAG System with Hybrid Retrieval, Reranking & Modular LLM Backends
 
-A lightweight CLI tool for **retrieval-augmented generation (RAG)** using FAISS and hybrid search.
-
-Quickly retrieve top relevant answers from your knowledge base for Python errors, debugging questions, or general programming queries.
+A production-oriented Retrieval-Augmented Generation (RAG) system built with a strong focus on **retrieval quality, modularity, and deployability**.
 
 ---
 
-## Features
+## 🚀 Overview
 
-- **Hybrid Search**: Combines dense (embedding-based) and sparse (BM25) retrieval for high relevance.
-- **Top-K Results**: Retrieve the most relevant answers with confidence scores.
-- **Contextual Output**: Displays question, answer, source, and score clearly in the CLI.
-- **Retrieval-Only Mode**: Focused on providing references and context before any generation.
-- **Lightweight & Fast**: Uses FAISS vector store for quick semantic search.
+This project implements an end-to-end RAG pipeline with:
+
+* Hybrid retrieval (Dense + Sparse)
+* Reranking using cross-encoders
+* Retrieval evaluation (recall@k, mrr)
+* Evaluation using RAGAS metrics
+* Modular LLM backends (Hugging Face / Ollama)
+* FastAPI inference service
+* Dockerized deployment
 
 ---
 
-## Installation
+## 🧩 System Architecture
 
-1. **Clone the repository**:
+```
+User Query
+   ↓
+Hybrid Retrieval (FAISS + BM25)
+   ↓
+Reciprocal Rank Fusion (RRF)
+   ↓
+Cross-Encoder Reranker
+   ↓
+Top-K Context
+   ↓
+LLM (HF / Ollama)
+   ↓
+Final Answer
+```
+
+---
+
+## ⚙️ Features
+
+### 🔍 Hybrid Retrieval
+
+* Dense retrieval using FAISS + embeddings
+* Sparse retrieval using BM25
+* Fusion via Reciprocal Rank Fusion (RRF)
+
+### 🧠 Reranking
+
+* Cross-encoder reranker improves relevance of retrieved chunks
+
+### 📊 Evaluation
+
+* RAGAS-based evaluation:
+
+  * Context Precision
+  * Faithfulness
+  * Answer Correctness
+
+### 🔌 Modular LLM Backend
+
+Switch between:
+
+* Hugging Face local models
+* Hugging Face Inference API
+* Ollama (optimized local inference)
+
+### 🌐 FastAPI Service
+
+* `/query` → inference endpoint
+* `/build` → dataset/index build
+* `/evaluate` → evaluation pipeline
+
+### 🐳 Dockerized
+
+* Fully containerized pipeline
+* Environment-driven configuration
+* Ready for cloud deployment
+
+---
+
+## 🛠️ Tech Stack
+
+* Python
+* FastAPI
+* FAISS
+* BM25
+* Transformers (Hugging Face)
+* RAGAS
+* Docker
+
+---
+
+## 📦 Setup
+
+### 1. Clone repo
 
 ```bash
-git clone <https://github.com/yourusername/rag-copilot.git>
-cd rag-copilot
+git clone <your-repo>
+cd <repo>
 ```
 
-2. **Set up your Python environment** (recommended with Miniconda):
+---
 
-```python
-conda create -n rag-copilot python=3.10
-conda activate rag-copilot
+### 2. Environment variables
+
+Create `.env` (for local):
+
+```bash
+HF_API_KEY=your_huggingface_token
+LLM_BACKEND=hf_model  # or ollama / hf_api
+LLM_MODEL="mistralai/Mistral-7B-Instruct-v0.2" #the llm name from HF
+OLLAMA_MODEL="gemma3:1b" #if running local llm from ollama
 ```
 
-3. **Install requirements**:
+---
 
-```python
+### 3. Run locally
+
+```bash
 pip install -r requirements.txt
+python api.py
 ```
-
-4. **Ensure FAISS vectors are loaded**:
-
-- Make sure your embeddings directory exists with precomputed vectors
-- Example: embeddings/faiss.index
 
 ---
 
-## **Usage**
+## 🐳 Docker Usage
 
-Run the CLI tool:
+### Build image
 
 ```bash
-python src/genereate_answers.py
+docker build -t rag-system .
 ```
 
-**Commands:**
-
-- Type your Python error or query (e.g., list index out of range).
-- Press **Enter** to retrieve top relevant results.
-- Type exit or quit to leave the CLI.
-
-**Example Session:**
+### Run container
 
 ```bash
->> Enter error/query: list index out of range
-
-=== Result ===
-Query      : list index out of range
-Confidence : high
-Explanation: Retrieved top relevant results
-
-Top Results:
-------------------------------------------------------------
-Source: stackoverflow
-QID: 4788445 | AID: 4788460 | Score: 1.300
-Answer: Title: list index out of range
-...
-
-Sources:
-  QID: 4788445 | AID: 4788460 | Score: 1.300
-  QID: 2918243 | AID: 2918291 | Score: 0.300
-  QID: 6317287 | AID: 6317324 | Score: 0.208
+docker run \
+  -p 8000:8000 \
+  -e HF_API_KEY=your_token \
+  -e LLM_BACKEND=hf_model \
+  -v ~/.cache/huggingface:/root/.cache/huggingface \
+  rag-system
 ```
 
 ---
 
-## **Project Structure**
+## 🧪 Example API Call
 
 ```bash
-rag-copilot/
-│
-├─ src/
-│  ├─ genereate_answers.py     # CLI entrypoint & retrieval logic
-│  ├─ query_retrival.py        # Hybrid search functions
-│  ├─ vector_persist.py        # FAISS vector store management
-│  └─ embedding.py             # Embedding model wrapper
-│
-├─ embeddings/                 # FAISS and BM25 index files
-│
-├─ requirements.txt
-└─ README.md
+curl -X POST http://localhost:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is AutoModelForCausalLM?"}'
 ```
-
-## **Configuration**
-
-- **TOP_K**: Number of top results returned per query (3 by default).
-- **MAX_CONTEXT_CHARS**: Maximum characters to include in context display (1500 by default).
-
-You can modify these values directly in genereate_answers.py:
-
-```python
-TOP_K = 3
-MAX_CONTEXT_CHARS = 1500
-```
-
-## **Notes**
-
-- Designed for **Python error debugging**, but can work with any textual query if you have embeddings.
-- Works **offline** once embeddings are generated.
-- Supports **FAISS vector search** and optionally **BM25 tokenized search**.
 
 ---
 
-## **Future Improvements**
+## 📊 Evaluation
 
-- Add **summary of top results** for quicker scanning.
-- Optionally integrate **LLM generation** for on-the-fly explanations.
-- Add **file-based query batch processing**.
+Run evaluation pipeline via:
+
+```bash
+python main.py eval retrieval
+python main.py eval ragas
+```
+
+Metrics:
+
+* Faithfulness
+* Answer Correctness
+* Context Precision
 
 ---
 
-## **License**
+## 🚀 Deployment Testing
 
-MIT License — feel free to use and modify for personal or commercial projects.
+Tested on GPU-backed cloud instances using Docker:
+
+* Verified environment portability
+* Measured inference latency improvements
+* Validated GPU compatibility
+
+---
+
+## ⚡ Key Learnings
+
+* Retrieval quality > LLM size in RAG systems
+* Hybrid retrieval significantly improves recall
+* Reranking is critical for precision
+* Containerization introduces I/O and startup tradeoffs
+* CPU inference is a major latency bottleneck
+
+---
+
+## 🔮 Future Improvements
+
+* LangChain / LangGraph integration
+* Streaming responses
+* Caching layer for responses
+* Async request handling
+* Production-grade logging & monitoring
+
+---
+
+## 📌 Notes
+
+* Hugging Face cache is mounted for faster startup
+* Ollama supported for optimized CPU inference
+* Designed for extensibility and experimentation
+
+---
+
+## 👨‍💻 Author
+
+Built as part of a hands-on ML systems and RAG engineering journey.
